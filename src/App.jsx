@@ -39,13 +39,13 @@ const QUESTIONS = [
     id: 4, section: 2,
     text: "How engaging did you find the sessions?",
     type: "linear",
-    scaleLabel: { low: "Not satisfied", high: "Very satisfied" },
+    scaleLabel: { low: "Low", high: "High" },
   },
   {
     id: 5, section: 2,
     text: "How relevant was the content to your personal or professional life?",
     type: "linear",
-    scaleLabel: { low: "Not satisfied", high: "Very satisfied" },
+    scaleLabel: { low: "Not relevant", high: "Very relevant" },
   },
   {
     id: 6, section: 2,
@@ -62,7 +62,7 @@ const QUESTIONS = [
     id: 8, section: 3,
     text: "To what extent did you gain new insights or perspectives?",
     type: "linear",
-    scaleLabel: { low: "Not satisfied", high: "Very satisfied" },
+    scaleLabel: { low: "Low", high: "High" },
   },
   {
     id: 9, section: 3,
@@ -74,7 +74,7 @@ const QUESTIONS = [
     id: 10, section: 3,
     text: "How confident do you feel applying what you learned?",
     type: "linear",
-    scaleLabel: { low: "Not satisfied", high: "Very satisfied" },
+    scaleLabel: { low: "Not confident", high: "Very confident" },
   },
   {
     id: 11, section: 3,
@@ -86,7 +86,7 @@ const QUESTIONS = [
     id: 12, section: 4,
     text: "How likely are you to apply something from these sessions in the next week?",
     type: "linear",
-    scaleLabel: { low: "Not satisfied", high: "Very satisfied" },
+    scaleLabel: { low: "Not At All", high: "Very Likely" },
   },
   {
     id: 13, section: 4,
@@ -109,7 +109,7 @@ const QUESTIONS = [
     id: 16, section: 5,
     text: "How much potential impact do you see from the sessions on your work or life or professional skillset?",
     type: "linear",
-    scaleLabel: { low: "Not satisfied", high: "Very satisfied" },
+    scaleLabel: { low: "Low", high: "High" },
   },
   {
     id: 17, section: 5,
@@ -127,7 +127,7 @@ const QUESTIONS = [
     id: 19, section: 6,
     text: "How meaningful were the sessions for you personally?",
     type: "linear",
-    scaleLabel: { low: "Not satisfied", high: "Very satisfied" },
+    scaleLabel: { low: "Not meaningful", high: "Very meaningful" },
   },
   {
     id: 20, section: 6,
