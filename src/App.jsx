@@ -8,7 +8,7 @@ const SECTIONS = [
   { id: 1, title: "Session Information", emoji: "📋", color: "#3b82f6" },
   { id: 2, title: "Reaction",            emoji: "💬", color: "#10b981" },
   { id: 3, title: "Learning",            emoji: "🧠", color: "#f97316" },
-  { id: 4, title: "Behavior",            emoji: "🚀", color: "#a78bfa" },
+  { id: 4, title: "Behaviour",            emoji: "🚀", color: "#a78bfa" },
   { id: 5, title: "Results",             emoji: "📈", color: "#f43f5e" },
   { id: 6, title: "Meaningfulness",      emoji: "❤️", color: "#fbbf24" },
   { id: 7, title: "Final Thoughts",      emoji: "✨", color: "#06b6d4" },
