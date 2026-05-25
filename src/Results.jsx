@@ -22,7 +22,6 @@ import {
   FaChartLine,
   FaQuestionCircle,
   FaUsers,
-  FaDatabase,
   FaSearch,
 } from "react-icons/fa";
 
