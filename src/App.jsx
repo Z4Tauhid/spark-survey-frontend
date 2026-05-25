@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Results from "./Results";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 // ─── Survey Questions — 7 sections ───────────────────────────────────────────
 const SECTIONS = [
@@ -1357,7 +1358,7 @@ export default function App() {
       submittedAt: new Date().toISOString(),
     };
     try {
-      await fetch("/api/submit-section", {
+      await fetch(`${API_URL}/api/submit-section`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify(payload),
