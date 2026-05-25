@@ -25,6 +25,8 @@ import {
   FaSearch,
 } from "react-icons/fa";
 
+const API_URL = process.env.REACT_APP_API_URL || "";
+
 // ─── Spark Logo ───────────────────────────────────────────────────────────
 function SparkLogoWhite() {
   return (
@@ -262,8 +264,8 @@ export default function Results() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/stats").then((r) => r.json()),
-      fetch("/api/responses").then((r) => r.json()),
+      fetch(`${API_URL}/api/stats`).then((r) => r.json()),
+      fetch(`${API_URL}/api/responses`).then((r) => r.json()),
     ])
       .then(([stats, resp]) => {
         setData(stats);
