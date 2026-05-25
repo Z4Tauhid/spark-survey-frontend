@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Results from "./Results";
 const API_URL = process.env.REACT_APP_API_URL || "";
