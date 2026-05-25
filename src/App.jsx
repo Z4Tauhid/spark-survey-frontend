@@ -481,13 +481,11 @@ function FishGame({ progress, total, isComplete, pondJumping }) {
 
 // ─── Celebration Screen ───────────────────────────────────────────────────────
 function CelebrationScreen({ name, onDone }) {
-  const [tick, setTick] = useState(0);
   const [countdown, setCountdown] = useState(8);
 
   // Tick every second for countdown display
   useEffect(() => {
     const interval = setInterval(() => {
-      setTick(t => t + 1);
       setCountdown(c => Math.max(0, c - 1));
     }, 1000);
     return () => clearInterval(interval);
@@ -877,7 +875,6 @@ function CelebrationScreen({ name, onDone }) {
         <div className="flex flex-col items-center gap-2">
           <motion.div
             className="h-2 rounded-full bg-orange-500"
-            style={{ width: 220 }}
             initial={{ scaleX: 1 }}
             animate={{ scaleX: 0 }}
             transition={{ duration: 8, ease: "linear" }}
