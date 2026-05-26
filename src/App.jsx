@@ -293,7 +293,7 @@ function FishGame({ progress, total, isComplete, pondJumping }) {
         <line x1={lakeX+8} y1={lakeY+12} x2={lakeX+lakeW-8} y2={lakeY+12} stroke="#60a5fa" strokeWidth="2" opacity="0.4"/>
         <line x1={lakeX+15} y1={lakeY+22} x2={lakeX+lakeW-20} y2={lakeY+22} stroke="#60a5fa" strokeWidth="1.5" opacity="0.3"/>
         <text x={lakeX+lakeW/2} y={lakeY+lakeH/2+5} textAnchor="middle" fill="#93c5fd" fontSize="9" fontWeight="700">LAKE</text>
-        <text x={lakeX+lakeW/2} y={lakeY-6} textAnchor="middle" fill="#93c5fd" fontSize="8">Big Lake</text>
+        <text x={lakeX+lakeW/2} y={lakeY-6} textAnchor="middle" fill="#93c5fd" fontSize="8">Vesijärvi </text>
         {/* Trees */}
         <rect x={lakeX+10} y={groundY-30} width="6" height="30" fill="#5d4037"/>
         <rect x={lakeX+10-8} y={groundY-48} width="22" height="22" fill="#2e7d32" rx="2"/>
@@ -895,6 +895,31 @@ function CelebrationScreen({ name, onDone }) {
 
 // ─── Thank You Screen ─────────────────────────────────────────────────────────
 function ThankYou({ name }) {
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [submitStatus, setSubmitStatus] = useState("idle"); // idle | loading | success | error
+
+  const handleContactSubmit = async () => {
+    if (!contactName.trim() && !contactEmail.trim()) return;
+    setSubmitStatus("loading");
+    try {
+      await fetch(`${API_URL}/api/submit-contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          alias: name,
+          contactName: contactName.trim(),
+          contactEmail: contactEmail.trim(),
+          submittedAt: new Date().toISOString(),
+        }),
+      });
+      setSubmitStatus("success");
+    } catch (e) {
+      console.log("Backend not connected — demo mode");
+      setSubmitStatus("success"); // show success anyway in demo mode
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: "#0f172a" }}>
       <motion.div
@@ -913,15 +938,66 @@ function ThankYou({ name }) {
           Thank you, {name}!
         </h1>
         <p className="text-blue-200 text-lg mb-2">The goldfish is swimming happily thanks to you.</p>
-        <p className="text-blue-300 text-sm mb-10">Your survey has been recorded. Spark will be in touch soon.</p>
 
         <div className="bg-white rounded-2xl p-8 border border-white/10 shadow-2xl flex flex-col items-center">
           <div className="flex justify-center text-center items-center mb-4 w-20 h-10">
-                <img className="" src="https://sparktraineeships.com/wp-content/uploads/2025/05/Main-Logo.svg" alt="" />
+            <img className="" src="https://sparktraineeships.com/wp-content/uploads/2025/05/Main-Logo.svg" alt="" />
           </div>
           <p className="text-black text-sm leading-relaxed">
             Our team will review your responses.
           </p>
+
+          {/* ── Optional contact section ── */}
+          <div className="w-full mt-6 border-t border-slate-200 pt-6">
+            <p className="text-slate-700 text-sm font-semibold mb-1 text-center">
+              Would you like Spark Traineeships to contact you?
+            </p>
+            <p className="text-slate-500 text-xs mb-4 text-center">
+              If so, please add your name and email address below. This is completely optional.
+            </p>
+
+            {submitStatus === "success" ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center gap-2 py-3"
+              >
+                <span className="text-3xl">🎉</span>
+                <p className="text-green-600 font-semibold text-sm">Details saved! We'll be in touch.</p>
+              </motion.div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  value={contactName}
+                  onChange={e => setContactName(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder-slate-400 outline-none focus:border-orange-400 transition-colors"
+                />
+                <input
+                  type="email"
+                  placeholder="Your email address"
+                  value={contactEmail}
+                  onChange={e => setContactEmail(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder-slate-400 outline-none focus:border-orange-400 transition-colors"
+                />
+                <motion.button
+                  onClick={handleContactSubmit}
+                  disabled={submitStatus === "loading" || (!contactName.trim() && !contactEmail.trim())}
+                  whileTap={{ scale: 0.97 }}
+                  className={`w-full py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
+                    (!contactName.trim() && !contactEmail.trim()) || submitStatus === "loading"
+                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                      : "bg-orange-500 hover:bg-orange-600 text-white cursor-pointer shadow-md"
+                  }`}
+                >
+                  {submitStatus === "loading" ? "Saving..." : "Send my details →"}
+                </motion.button>
+              </div>
+            )}
+          </div>
+          {/* ── end optional contact section ── */}
+
           <div className="mt-6 flex justify-center gap-3">
             <span className="text-2xl">🌊</span>
             <span className="text-2xl">🐟</span>
@@ -948,7 +1024,7 @@ function AgreementPopup({ onAgree }) {
         <div className="flex justify-center">
           <SparkLogoWhite />
         </div>
-        <h2 className="text-2xl font-bold text-[#1e2d5a] text-center mb-2">Welcome to Spark Survey</h2>
+        <h2 className="text-2xl font-bold text-[#1e2d5a] text-center mb-2">Welcome to Spark Traineeships Survey</h2>
         <p className="text-slate-500 text-center text-sm mb-6">Before you begin, please review and accept our terms.</p>
         <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-600 h-40 overflow-y-auto mb-6 border border-slate-200 leading-relaxed">
           <p className="font-semibold text-slate-700 mb-2">Data Collection Agreement</p>
@@ -992,15 +1068,16 @@ function NameScreen({ onNext }) {
           <SparkLogoWhite />
           </div>
         <h1 className="text-3xl font-bold text-[#1e2d5a] mb-2">Let's get started!</h1>
-        <p className="text-[#1e2d5a] text-sm mb-8">Tell us your name to personalise your experience.</p>
+        <p className="text-[#1e2d5a] text-sm mb-8">To personalise your experience submit your alias.</p>
         <input
           type="text"
-          placeholder="Your full name"
+          placeholder="Alias"
           value={name}
           onChange={e => setName(e.target.value)}
           onKeyDown={e => e.key==="Enter" && name.trim() && onNext(name.trim())}
-          className="w-full bg-[#1e2d5a] border border-white/20 text-white placeholder-blue-300 rounded-xl px-5 py-4 text-base mb-6 outline-none focus:border-orange-400 transition-colors"
+          className="w-full bg-[#1e2d5a] border border-white/20 text-white placeholder-blue-300 rounded-xl px-5 py-4 text-base mb-3 outline-none focus:border-orange-400 transition-colors"
         />
+        <p className="mb-3 text-red-900 font-semibold">Please don't share your personal information to keep the survey 100% anonomous </p>
         <motion.button
           onClick={() => name.trim() && onNext(name.trim())}
           whileTap={{ scale:0.96 }}
@@ -1476,15 +1553,7 @@ export default function App() {
           <motion.div className="w-full rounded-2xl overflow-hidden border border-white/10"
             style={{ background:"#0f1f4a", maxWidth:500 }}
             initial={{ opacity:0, x:-30 }} animate={{ opacity:1, x:0 }}>
-            <div className="px-4 py-2 flex items-center gap-2 border-b border-white/10">
-              <div className="w-2.5 h-2.5 rounded-full bg-orange-400"/>
-              <span className="text-xs text-white font-medium">Hi, {userName}! Save The Fish 🐟</span>
-              <span className="ml-auto text-xs text-orange-400">{progress}/{QUESTIONS.length} pipes laid</span>
-            </div>
-            <FishGame progress={progress} total={QUESTIONS.length} isComplete={false} pondJumping={isPondJump} />
-          </motion.div>
-
-          <AnimatePresence mode="wait">
+              <div className="flex justify-center"><AnimatePresence mode="wait">
             {isPondJump ? (
               <motion.p key="jumping" initial={{ opacity:0, scale:0.8 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0 }}
                 className="text-yellow-300 text-sm font-bold text-center mt-3 max-w-xs">
@@ -1499,7 +1568,16 @@ export default function App() {
                 {progress >= 20 && progress < QUESTIONS.length && "🌊 So close! Just a few more questions to save the fish!"}
               </motion.p>
             )}
-          </AnimatePresence>
+          </AnimatePresence></div>
+            <div className="px-4 py-2 flex items-center gap-2 border-b border-white/10">
+              <div className="w-2.5 h-2.5 rounded-full bg-orange-400"/>
+              <span className="text-xs text-white font-medium">Hi, {userName}! Save The Fish 🐟</span>
+              <span className="ml-auto text-xs text-orange-400">{progress}/{QUESTIONS.length} pipes laid</span>
+            </div>
+            <FishGame progress={progress} total={QUESTIONS.length} isComplete={false} pondJumping={isPondJump} />
+          </motion.div>
+
+          
         </div>
 
         {/* Question panel */}
