@@ -292,8 +292,8 @@ function FishGame({ progress, total, isComplete, pondJumping }) {
         <rect x={lakeX} y={lakeY} width={lakeW} height={lakeH+(groundY-lakeY)} fill="#1a5fa0"/>
         <line x1={lakeX+8} y1={lakeY+12} x2={lakeX+lakeW-8} y2={lakeY+12} stroke="#60a5fa" strokeWidth="2" opacity="0.4"/>
         <line x1={lakeX+15} y1={lakeY+22} x2={lakeX+lakeW-20} y2={lakeY+22} stroke="#60a5fa" strokeWidth="1.5" opacity="0.3"/>
-        <text x={lakeX+lakeW/2} y={lakeY+lakeH/2+5} textAnchor="middle" fill="#93c5fd" fontSize="9" fontWeight="700">LAKE</text>
-        <text x={lakeX+lakeW/2} y={lakeY-6} textAnchor="middle" fill="#93c5fd" fontSize="8">Vesijärvi </text>
+        <text x={lakeX+lakeW/2} y={lakeY+lakeH/2+-7} textAnchor="middle" fill="#93c5fd" fontSize="9" fontWeight="700">WATER LAKE</text>
+        
         {/* Trees */}
         <rect x={lakeX+10} y={groundY-30} width="6" height="30" fill="#5d4037"/>
         <rect x={lakeX+10-8} y={groundY-48} width="22" height="22" fill="#2e7d32" rx="2"/>
@@ -1553,7 +1553,13 @@ export default function App() {
           <motion.div className="w-full rounded-2xl overflow-hidden border border-white/10"
             style={{ background:"#0f1f4a", maxWidth:500 }}
             initial={{ opacity:0, x:-30 }} animate={{ opacity:1, x:0 }}>
-              <div className="flex justify-center"><AnimatePresence mode="wait">
+             
+            <div className="px-4 py-2 flex items-center gap-2 border-b border-white/10">
+              <div className="w-2.5 h-2.5 rounded-full bg-orange-400"/>
+              <span className="text-xs text-white font-medium">Hi, {userName}! Save The Fish 🐟</span>
+              <span className="ml-auto text-xs text-orange-400">{progress}/{QUESTIONS.length} pipes laid</span>
+            </div>
+             <div className="flex justify-center mb-2"><AnimatePresence mode="wait">
             {isPondJump ? (
               <motion.p key="jumping" initial={{ opacity:0, scale:0.8 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0 }}
                 className="text-yellow-300 text-sm font-bold text-center mt-3 max-w-xs">
@@ -1562,18 +1568,13 @@ export default function App() {
             ) : (
               <motion.p key={progress} initial={{ opacity:0, y:5 }} animate={{ opacity:1, y:0 }}
                 className="text-white font-semibold text-xs text-center mt-3 max-w-xs">
-                {progress === 0  && "🐠 The goldfish is sad and thirsty. Answer questions to build the pipe!"}
+                {progress === 0  && "🐠 The goldfish is sad and thirsty because the pond has dried up. Answer the questions to build a pipe and bring water back to the fish."}
                 {progress > 0   && progress < 10  && "🔧 Great start! The pipe is being laid toward the lake..."}
                 {progress >= 10 && progress < 20  && "💧 Almost halfway there! The fish can sense water coming..."}
                 {progress >= 20 && progress < QUESTIONS.length && "🌊 So close! Just a few more questions to save the fish!"}
               </motion.p>
             )}
           </AnimatePresence></div>
-            <div className="px-4 py-2 flex items-center gap-2 border-b border-white/10">
-              <div className="w-2.5 h-2.5 rounded-full bg-orange-400"/>
-              <span className="text-xs text-white font-medium">Hi, {userName}! Save The Fish 🐟</span>
-              <span className="ml-auto text-xs text-orange-400">{progress}/{QUESTIONS.length} pipes laid</span>
-            </div>
             <FishGame progress={progress} total={QUESTIONS.length} isComplete={false} pondJumping={isPondJump} />
           </motion.div>
 
