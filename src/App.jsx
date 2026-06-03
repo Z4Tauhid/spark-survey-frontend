@@ -1,17 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Results from "./Results";
-const API_URL = process.env.REACT_APP_API_URL || "";
 
-// ─── Survey Questions — 7 sections ───────────────────────────────────────────
+// ─── Survey — 7 sections, 25 questions ───────────────────────────────────────
 const SECTIONS = [
   { id: 1, title: "Session Information", emoji: "📋", color: "#3b82f6" },
-  { id: 2, title: "Reaction",            emoji: "💬", color: "#10b981" },
+  { id: 2, title: "Reaction",            emoji: "😊", color: "#10b981" },
   { id: 3, title: "Learning",            emoji: "🧠", color: "#f97316" },
-  { id: 4, title: "Behaviour",            emoji: "🚀", color: "#a78bfa" },
-  { id: 5, title: "Results",             emoji: "📈", color: "#f43f5e" },
-  { id: 6, title: "Meaningfulness",      emoji: "❤️", color: "#fbbf24" },
-  { id: 7, title: "Final Thoughts",      emoji: "✨", color: "#06b6d4" },
+  { id: 4, title: "Behavior",            emoji: "⚡", color: "#a78bfa" },
+  { id: 5, title: "Results",             emoji: "🏆", color: "#f43f5e" },
+  { id: 6, title: "Meaningfulness",      emoji: "💛", color: "#fbbf24" },
+  { id: 7, title: "Final Thoughts",      emoji: "💬", color: "#06b6d4" },
 ];
 
 const QUESTIONS = [
@@ -19,8 +18,10 @@ const QUESTIONS = [
   {
     id: 1, section: 1,
     text: "Which sessions did you attend?",
-    type: "checkbox_other",
-    options: ["Session 1: Self-Awareness", "Session 2: Collaboration", "Session 3: Time Management", "Session 4: Presentation Techniques"],
+    description: "Please mark all of the sessions you attended.",
+    type: "checkbox",
+    options: ["Session 1: Self-Awareness", "Session 2: Collaboration", "Session 3: Time Management", "Session 4: Presentation Techniques", "Other"],
+    hasOther: true,
   },
   {
     id: 2, section: 1,
@@ -28,106 +29,115 @@ const QUESTIONS = [
     type: "checkbox",
     options: ["Pinja", "Kimberley"],
   },
+
   // ── Section 2: Level 1 — Reaction ──
   {
     id: 3, section: 2,
     text: "Overall, how satisfied were you with the 4 sessions?",
-    type: "linear",
+    type: "scale5",
     scaleLabel: { low: "Not satisfied", high: "Very satisfied" },
   },
   {
     id: 4, section: 2,
     text: "How engaging did you find the sessions?",
-    type: "linear",
-    scaleLabel: { low: "Low", high: "High" },
+    type: "scale5",
+    scaleLabel: { low: "Not engaging", high: "Very engaging" },
   },
   {
     id: 5, section: 2,
     text: "How relevant was the content to your personal or professional life?",
-    type: "linear",
+    type: "scale5",
     scaleLabel: { low: "Not relevant", high: "Very relevant" },
   },
   {
     id: 6, section: 2,
     text: "What part of the sessions felt most valuable to you?",
-    type: "paragraph",
+    type: "text",
   },
   {
     id: 7, section: 2,
     text: "What, if anything, felt unclear or less useful?",
-    type: "paragraph",
+    type: "text",
   },
+
   // ── Section 3: Level 2 — Learning ──
   {
     id: 8, section: 3,
     text: "To what extent did you gain new insights or perspectives?",
-    type: "linear",
-    scaleLabel: { low: "Low", high: "High" },
+    type: "scale5",
+    scaleLabel: { low: "Not at all", high: "A great deal" },
   },
   {
     id: 9, section: 3,
     text: "Which skills or concepts did you learn?",
-    type: "checkbox_other",
-    options: ["Self awareness", "Communication", "Emotional regulation", "Collaboration", "Problem solving"],
+    type: "checkbox",
+    options: ["Self awareness", "Communication", "Emotional regulation", "Collaboration", "Problem solving", "Other"],
+    hasOther: true,
   },
   {
     id: 10, section: 3,
     text: "How confident do you feel applying what you learned?",
-    type: "linear",
+    type: "scale5",
     scaleLabel: { low: "Not confident", high: "Very confident" },
   },
   {
     id: 11, section: 3,
     text: "What is one idea, tool or learning you will take with you from these sessions?",
-    type: "paragraph",
+    type: "text",
   },
+
   // ── Section 4: Level 3 — Behavior ──
   {
     id: 12, section: 4,
     text: "How likely are you to apply something from these sessions in the next week?",
-    type: "linear",
-    scaleLabel: { low: "Not At All", high: "Very Likely" },
+    type: "scale5",
+    scaleLabel: { low: "Not likely", high: "Very likely" },
   },
   {
     id: 13, section: 4,
     text: "Which situations do you expect to apply the learning to?",
-    type: "checkbox_other",
-    options: ["Work tasks", "Team interactions", "Personal relationships", "Self management", "Decision making"],
+    type: "checkbox",
+    options: ["Work tasks", "Team interactions", "Personal relationships", "Self management", "Decision making", "Other"],
+    hasOther: true,
   },
   {
     id: 14, section: 4,
     text: "What would support you in applying these skills?",
-    type: "paragraph",
+    type: "text",
   },
   {
     id: 15, section: 4,
     text: "What would make it difficult to apply these skills?",
-    type: "paragraph",
+    type: "text",
   },
+
   // ── Section 5: Level 4 — Results ──
   {
     id: 16, section: 5,
-    text: "How much potential impact do you see from the sessions on your work or life or professional skillset?",
-    type: "linear",
-    scaleLabel: { low: "Low", high: "High" },
+    text: "How much potential impact do you see from the sessions on your work, life or professional skillset?",
+    type: "scale5",
+    scaleLabel: { low: "No impact", high: "Very high impact" },
   },
   {
     id: 17, section: 5,
     text: "If you imagine applying these skills consistently, what positive changes do you expect?",
-    type: "paragraph",
+    type: "text",
   },
   {
     id: 18, section: 5,
-    text: "Do you see any long term value in continuing this training program (if more interactive sessions would be offered)?",
-    type: "multiple_choice_comment",
+    text: "Do you see any long-term value in continuing this training program?",
+    type: "radio",
     options: ["Yes", "No", "Maybe"],
+    hasOther: true,
+    otherLabel: "Optional comment",
   },
+
   // ── Section 6: Level 5 — Meaningfulness ──
   {
     id: 19, section: 6,
     text: "How meaningful were the sessions for you personally?",
-    type: "linear",
-    scaleLabel: { low: "Not meaningful", high: "Very meaningful" },
+    type: "scale5",
+    scaleLabel: { low: "Not meaningful", high: "Deeply meaningful" },
   },
   {
     id: 20, section: 6,
@@ -138,32 +148,35 @@ const QUESTIONS = [
   {
     id: 21, section: 6,
     text: "Which part of the session felt most personally meaningful or resonant?",
-    type: "paragraph",
+    type: "text",
   },
   {
     id: 22, section: 6,
     text: "In which ways did the sessions connect to something important in your life, values, or goals?",
-    type: "paragraph",
+    type: "text",
   },
   {
     id: 23, section: 6,
-    text: "If you could describe the \"human value\" of this session in one sentence, what would it be?",
-    type: "paragraph",
+    text: "If you could describe the HUMAN VALUE of this session in one sentence, what would it be?",
+    type: "text",
   },
+
   // ── Section 7: Final Thoughts ──
   {
     id: 24, section: 7,
     text: "Is there anything you would like us to improve for the next session?",
-    type: "paragraph",
+    type: "text",
   },
   {
     id: 25, section: 7,
-    text: "Any additional comments or reflections? (Anything not addressed that you would like to highlight or comment?)",
-    type: "paragraph",
+    text: "Any additional comments or reflections?",
+    description: "Anything not addressed that you would like to highlight or comment?",
+    type: "text",
+    optional: true,
   },
 ];
 
-// Group questions by section for the 4-section flow
+// Group questions by section
 const SECTION_QUESTIONS = SECTIONS.map(sec => ({
   ...sec,
   questions: QUESTIONS.filter(q => q.section === sec.id),
@@ -292,8 +305,8 @@ function FishGame({ progress, total, isComplete, pondJumping }) {
         <rect x={lakeX} y={lakeY} width={lakeW} height={lakeH+(groundY-lakeY)} fill="#1a5fa0"/>
         <line x1={lakeX+8} y1={lakeY+12} x2={lakeX+lakeW-8} y2={lakeY+12} stroke="#60a5fa" strokeWidth="2" opacity="0.4"/>
         <line x1={lakeX+15} y1={lakeY+22} x2={lakeX+lakeW-20} y2={lakeY+22} stroke="#60a5fa" strokeWidth="1.5" opacity="0.3"/>
-        <text x={lakeX+lakeW/2} y={lakeY+lakeH/2+-7} textAnchor="middle" fill="#93c5fd" fontSize="9" fontWeight="700">WATER LAKE</text>
-        
+        <text x={lakeX+lakeW/2} y={lakeY+lakeH/2+5} textAnchor="middle" fill="#93c5fd" fontSize="9" fontWeight="700">LAKE</text>
+        <text x={lakeX+lakeW/2} y={lakeY-6} textAnchor="middle" fill="#93c5fd" fontSize="8">Big Lake</text>
         {/* Trees */}
         <rect x={lakeX+10} y={groundY-30} width="6" height="30" fill="#5d4037"/>
         <rect x={lakeX+10-8} y={groundY-48} width="22" height="22" fill="#2e7d32" rx="2"/>
@@ -481,11 +494,13 @@ function FishGame({ progress, total, isComplete, pondJumping }) {
 
 // ─── Celebration Screen ───────────────────────────────────────────────────────
 function CelebrationScreen({ name, onDone }) {
+  const [tick, setTick] = useState(0);
   const [countdown, setCountdown] = useState(8);
 
   // Tick every second for countdown display
   useEffect(() => {
     const interval = setInterval(() => {
+      setTick(t => t + 1);
       setCountdown(c => Math.max(0, c - 1));
     }, 1000);
     return () => clearInterval(interval);
@@ -875,6 +890,7 @@ function CelebrationScreen({ name, onDone }) {
         <div className="flex flex-col items-center gap-2">
           <motion.div
             className="h-2 rounded-full bg-orange-500"
+            style={{ width: 220 }}
             initial={{ scaleX: 1 }}
             animate={{ scaleX: 0 }}
             transition={{ duration: 8, ease: "linear" }}
@@ -895,31 +911,6 @@ function CelebrationScreen({ name, onDone }) {
 
 // ─── Thank You Screen ─────────────────────────────────────────────────────────
 function ThankYou({ name }) {
-  const [contactName, setContactName] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
-  const [submitStatus, setSubmitStatus] = useState("idle"); // idle | loading | success | error
-
-  const handleContactSubmit = async () => {
-    if (!contactName.trim() && !contactEmail.trim()) return;
-    setSubmitStatus("loading");
-    try {
-      await fetch(`${API_URL}/api/submit-contact`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          alias: name,
-          contactName: contactName.trim(),
-          contactEmail: contactEmail.trim(),
-          submittedAt: new Date().toISOString(),
-        }),
-      });
-      setSubmitStatus("success");
-    } catch (e) {
-      console.log("Backend not connected — demo mode");
-      setSubmitStatus("success"); // show success anyway in demo mode
-    }
-  };
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: "#0f172a" }}>
       <motion.div
@@ -938,66 +929,15 @@ function ThankYou({ name }) {
           Thank you, {name}!
         </h1>
         <p className="text-blue-200 text-lg mb-2">The goldfish is swimming happily thanks to you.</p>
+        <p className="text-blue-300 text-sm mb-10">Your survey has been recorded. Spark will be in touch soon.</p>
 
         <div className="bg-white rounded-2xl p-8 border border-white/10 shadow-2xl flex flex-col items-center">
           <div className="flex justify-center text-center items-center mb-4 w-20 h-10">
-            <img className="" src="https://sparktraineeships.com/wp-content/uploads/2025/05/Main-Logo.svg" alt="" />
+                <img className="" src="https://sparktraineeships.com/wp-content/uploads/2025/05/Main-Logo.svg" alt="" />
           </div>
           <p className="text-black text-sm leading-relaxed">
             Our team will review your responses.
           </p>
-
-          {/* ── Optional contact section ── */}
-          <div className="w-full mt-6 border-t border-slate-200 pt-6">
-            <p className="text-slate-700 text-sm font-semibold mb-1 text-center">
-              Would you like Spark Traineeships to contact you?
-            </p>
-            <p className="text-slate-500 text-xs mb-4 text-center">
-              If so, please add your name and email address below. This is completely optional.
-            </p>
-
-            {submitStatus === "success" ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex flex-col items-center gap-2 py-3"
-              >
-                <span className="text-3xl">🎉</span>
-                <p className="text-green-600 font-semibold text-sm">Details saved! We'll be in touch.</p>
-              </motion.div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <input
-                  type="text"
-                  placeholder="Your name"
-                  value={contactName}
-                  onChange={e => setContactName(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder-slate-400 outline-none focus:border-orange-400 transition-colors"
-                />
-                <input
-                  type="email"
-                  placeholder="Your email address"
-                  value={contactEmail}
-                  onChange={e => setContactEmail(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder-slate-400 outline-none focus:border-orange-400 transition-colors"
-                />
-                <motion.button
-                  onClick={handleContactSubmit}
-                  disabled={submitStatus === "loading" || (!contactName.trim() && !contactEmail.trim())}
-                  whileTap={{ scale: 0.97 }}
-                  className={`w-full py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
-                    (!contactName.trim() && !contactEmail.trim()) || submitStatus === "loading"
-                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                      : "bg-orange-500 hover:bg-orange-600 text-white cursor-pointer shadow-md"
-                  }`}
-                >
-                  {submitStatus === "loading" ? "Saving..." : "Send my details →"}
-                </motion.button>
-              </div>
-            )}
-          </div>
-          {/* ── end optional contact section ── */}
-
           <div className="mt-6 flex justify-center gap-3">
             <span className="text-2xl">🌊</span>
             <span className="text-2xl">🐟</span>
@@ -1024,7 +964,7 @@ function AgreementPopup({ onAgree }) {
         <div className="flex justify-center">
           <SparkLogoWhite />
         </div>
-        <h2 className="text-2xl font-bold text-[#1e2d5a] text-center mb-2">Welcome to Spark Traineeships Survey</h2>
+        <h2 className="text-2xl font-bold text-[#1e2d5a] text-center mb-2">Welcome to Spark Survey</h2>
         <p className="text-slate-500 text-center text-sm mb-6">Before you begin, please review and accept our terms.</p>
         <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-600 h-40 overflow-y-auto mb-6 border border-slate-200 leading-relaxed">
           <p className="font-semibold text-slate-700 mb-2">Data Collection Agreement</p>
@@ -1068,16 +1008,15 @@ function NameScreen({ onNext }) {
           <SparkLogoWhite />
           </div>
         <h1 className="text-3xl font-bold text-[#1e2d5a] mb-2">Let's get started!</h1>
-        <p className="text-[#1e2d5a] text-sm mb-8">To personalise your experience submit your alias.</p>
+        <p className="text-[#1e2d5a] text-sm mb-8">Tell us your name to personalise your experience.</p>
         <input
           type="text"
-          placeholder="Alias"
+          placeholder="Your full name"
           value={name}
           onChange={e => setName(e.target.value)}
           onKeyDown={e => e.key==="Enter" && name.trim() && onNext(name.trim())}
-          className="w-full bg-[#1e2d5a] border border-white/20 text-white placeholder-blue-300 rounded-xl px-5 py-4 text-base mb-3 outline-none focus:border-orange-400 transition-colors"
+          className="w-full bg-[#1e2d5a] border border-white/20 text-white placeholder-blue-300 rounded-xl px-5 py-4 text-base mb-6 outline-none focus:border-orange-400 transition-colors"
         />
-        <p className="mb-3 text-red-900 font-semibold">Please don't share your personal information to keep the survey 100% anonomous </p>
         <motion.button
           onClick={() => name.trim() && onNext(name.trim())}
           whileTap={{ scale:0.96 }}
@@ -1092,161 +1031,145 @@ function NameScreen({ onNext }) {
 
 // ─── Question Card ────────────────────────────────────────────────────────────
 function QuestionCard({ question, answer, onChange }) {
+  // answer shape for questions with hasOther:
+  //   { selected: [...], otherText: "..." }  for checkbox/radio+other
+  // answer shape for plain types: raw value
+
+  const isWithOther = question.hasOther;
+
+  // Helpers for checkbox+other
+  const selectedArr  = isWithOther && Array.isArray(answer?.selected) ? answer.selected : [];
+  const otherText    = isWithOther ? (answer?.otherText ?? "") : "";
+
   const handleCheckbox = (opt) => {
-    const base = Array.isArray(answer?.selected) ? [...answer.selected] : [];
-    const next = base.includes(opt) ? base.filter(x => x !== opt) : [...base, opt];
-    onChange({ ...(answer || {}), selected: next });
+    if (isWithOther) {
+      const arr = [...selectedArr];
+      if (arr.includes(opt)) onChange({ selected: arr.filter(x => x !== opt), otherText });
+      else onChange({ selected: [...arr, opt], otherText });
+    } else {
+      const arr = Array.isArray(answer) ? [...answer] : [];
+      if (arr.includes(opt)) onChange(arr.filter(x => x !== opt));
+      else onChange([...arr, opt]);
+    }
   };
 
-  // For simple checkbox (no other)
-  const handleSimpleCheckbox = (opt) => {
-    const arr = Array.isArray(answer) ? [...answer] : [];
-    if (arr.includes(opt)) onChange(arr.filter(x => x !== opt));
-    else onChange([...arr, opt]);
+  const handleRadioWithOther = (opt) => {
+    if (isWithOther) onChange({ selected: opt, otherText });
+    else onChange(opt);
   };
+
+  const selectedRadio = isWithOther ? answer?.selected : answer;
 
   return (
     <div>
-      <p className="text-white font-semibold text-base md:text-lg mb-5 leading-relaxed">{question.text}</p>
+      {/* Question description (italic subtitle) */}
+      {question.description && (
+        <p className="text-blue-300 text-xs italic mb-2 leading-relaxed">{question.description}</p>
+      )}
 
-      {/* Radio (single select) */}
+      {/* Question text */}
+      <p className="text-white font-semibold text-base md:text-lg mb-4 leading-relaxed">
+        {question.text}
+        {question.optional && <span className="ml-2 text-xs text-blue-400 font-normal">(optional)</span>}
+      </p>
+
+      {/* ── RADIO ── */}
       {question.type === "radio" && (
         <div className="flex flex-col gap-2">
           {question.options.map(opt => (
-            <motion.button key={opt} onClick={() => onChange(opt)} whileTap={{ scale: 0.97 }}
-              className={`text-left px-5 py-3 rounded-xl text-sm font-medium transition-all duration-150 border ${answer === opt ? "bg-orange-500 border-orange-400 text-white" : "bg-white/5 border-white/10 text-blue-100 hover:bg-white/10 hover:border-orange-400/50"}`}>
+            <motion.button key={opt} onClick={() => handleRadioWithOther(opt)} whileTap={{ scale:0.97 }}
+              className={`text-left px-5 py-3 rounded-xl text-sm font-medium transition-all duration-150 border ${
+                selectedRadio === opt
+                  ? "bg-orange-500 border-orange-400 text-white"
+                  : "bg-white/5 border-white/10 text-blue-100 hover:bg-white/10 hover:border-orange-400/50"
+              }`}>
               {opt}
             </motion.button>
           ))}
-        </div>
-      )}
-
-      {/* Simple checkbox (no other field) */}
-      {question.type === "checkbox" && (
-        <div className="flex flex-col gap-2">
-          {question.options.map(opt => {
-            const ch = Array.isArray(answer) && answer.includes(opt);
-            return (
-              <motion.button key={opt} onClick={() => handleSimpleCheckbox(opt)} whileTap={{ scale: 0.97 }}
-                className={`flex items-center gap-3 text-left px-5 py-3 rounded-xl text-sm font-medium transition-all duration-150 border ${ch ? "bg-orange-500 border-orange-400 text-white" : "bg-white/5 border-white/10 text-blue-100 hover:bg-white/10"}`}>
-                <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${ch ? "bg-white border-white" : "border-white/30"}`}>
-                  {ch && <svg viewBox="0 0 12 12" width="10" fill="none"><path d="M2 6l3 3 5-5" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                </div>
-                {opt}
-              </motion.button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Checkbox with "Other" short-answer field */}
-      {question.type === "checkbox_other" && (
-        <div className="flex flex-col gap-2">
-          {question.options.map(opt => {
-            const ch = Array.isArray(answer?.selected) && answer.selected.includes(opt);
-            return (
-              <motion.button key={opt} onClick={() => handleCheckbox(opt)} whileTap={{ scale: 0.97 }}
-                className={`flex items-center gap-3 text-left px-5 py-3 rounded-xl text-sm font-medium transition-all duration-150 border ${ch ? "bg-orange-500 border-orange-400 text-white" : "bg-white/5 border-white/10 text-blue-100 hover:bg-white/10"}`}>
-                <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${ch ? "bg-white border-white" : "border-white/30"}`}>
-                  {ch && <svg viewBox="0 0 12 12" width="10" fill="none"><path d="M2 6l3 3 5-5" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                </div>
-                {opt}
-              </motion.button>
-            );
-          })}
-          {/* Other option */}
-          <div className={`flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium border transition-all duration-150 cursor-pointer ${answer?.otherChecked ? "bg-orange-500 border-orange-400" : "bg-white/5 border-white/10"}`}
-            onClick={() => onChange({ ...(answer || {}), otherChecked: !answer?.otherChecked, otherText: answer?.otherText || "" })}>
-            <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${answer?.otherChecked ? "bg-white border-white" : "border-white/30"}`}>
-              {answer?.otherChecked && <svg viewBox="0 0 12 12" width="10" fill="none"><path d="M2 6l3 3 5-5" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-            </div>
-            <span className={answer?.otherChecked ? "text-white" : "text-blue-100"}>Other</span>
-          </div>
-          {answer?.otherChecked && (
+          {/* Optional comment field for radio+other */}
+          {isWithOther && (
             <input
               type="text"
-              placeholder="Please specify..."
-              value={answer?.otherText || ""}
-              onChange={e => onChange({ ...(answer || {}), otherText: e.target.value })}
-              onClick={e => e.stopPropagation()}
-              className="w-full bg-white/5 border border-white/20 text-white placeholder-blue-400 rounded-xl px-4 py-3 text-sm outline-none focus:border-orange-400 transition-colors"
+              placeholder={question.otherLabel || "Optional comment..."}
+              value={otherText}
+              onChange={e => onChange({ selected: selectedRadio, otherText: e.target.value })}
+              className="mt-1 w-full bg-white/5 border border-white/10 text-white placeholder-blue-400
+                         rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange-400 transition-colors"
             />
           )}
         </div>
       )}
 
-      {/* Linear scale 1–5 */}
-      {question.type === "linear" && (
+      {/* ── CHECKBOX ── */}
+      {question.type === "checkbox" && (
+        <div className="flex flex-col gap-2">
+          {question.options.map(opt => {
+            const ch = isWithOther ? selectedArr.includes(opt) : (Array.isArray(answer) && answer.includes(opt));
+            return (
+              <motion.button key={opt} onClick={() => handleCheckbox(opt)} whileTap={{ scale:0.97 }}
+                className={`flex items-center gap-3 text-left px-5 py-3 rounded-xl text-sm font-medium transition-all duration-150 border ${
+                  ch ? "bg-orange-500 border-orange-400 text-white" : "bg-white/5 border-white/10 text-blue-100 hover:bg-white/10"
+                }`}>
+                <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${ch ? "bg-white border-white" : "border-white/30"}`}>
+                  {ch && <svg viewBox="0 0 12 12" width="10" fill="none"><path d="M2 6l3 3 5-5" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                </div>
+                {opt}
+              </motion.button>
+            );
+          })}
+          {/* Short-answer for "Other" when hasOther */}
+          {isWithOther && selectedArr.includes("Other") && (
+            <input
+              type="text"
+              placeholder="Please specify..."
+              value={otherText}
+              onChange={e => onChange({ selected: selectedArr, otherText: e.target.value })}
+              className="mt-1 w-full bg-white/5 border border-orange-400/50 text-white placeholder-blue-400
+                         rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange-400 transition-colors"
+            />
+          )}
+        </div>
+      )}
+
+      {/* ── SCALE 1–5 ── */}
+      {question.type === "scale5" && (
         <div>
           <div className="flex justify-between text-xs text-blue-300 mb-3 px-1">
-            <span>1 = {question.scaleLabel?.low || "Not satisfied"}</span>
-            <span>5 = {question.scaleLabel?.high || "Very satisfied"}</span>
+            <span>1 — {question.scaleLabel?.low  || "Not satisfied"}</span>
+            <span>5 — {question.scaleLabel?.high || "Very satisfied"}</span>
           </div>
           <div className="flex gap-3 justify-center">
-            {[1, 2, 3, 4, 5].map(n => (
-              <motion.button key={n} onClick={() => onChange(n)} whileTap={{ scale: 0.9 }}
-                className={`w-12 h-12 rounded-xl font-bold text-base transition-all ${answer === n ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30" : "bg-white/10 text-blue-200 hover:bg-white/20"}`}>
+            {[1,2,3,4,5].map(n => (
+              <motion.button key={n} onClick={() => onChange(n)} whileTap={{ scale:0.88 }}
+                className={`w-12 h-12 rounded-xl font-black text-lg transition-all shadow-sm ${
+                  answer === n
+                    ? "bg-orange-500 text-white shadow-orange-500/30 shadow-lg scale-110"
+                    : "bg-white/10 text-blue-200 hover:bg-white/20"
+                }`}>
                 {n}
               </motion.button>
             ))}
           </div>
+          {/* Selected label feedback */}
+          {answer && (
+            <p className="text-center text-xs text-orange-300 mt-2 font-medium">
+              {answer === 1 ? `1 — ${question.scaleLabel?.low  || "Not satisfied"}` :
+               answer === 5 ? `5 — ${question.scaleLabel?.high || "Very satisfied"}` :
+               `${answer} / 5`}
+            </p>
+          )}
         </div>
       )}
 
-      {/* Paragraph (long text) */}
-      {question.type === "paragraph" && (
+      {/* ── TEXT / PARAGRAPH ── */}
+      {question.type === "text" && (
         <textarea
-          placeholder="Your thoughts here..."
+          placeholder={question.optional ? "Your thoughts here... (optional)" : "Your thoughts here..."}
           value={answer || ""}
           onChange={e => onChange(e.target.value)}
           rows={4}
           className="w-full bg-white/5 border border-white/10 text-white placeholder-blue-400 rounded-xl px-4 py-3 text-sm outline-none focus:border-orange-400 resize-none transition-colors"
         />
-      )}
-
-      {/* Legacy text (short) */}
-      {question.type === "text" && (
-        <textarea
-          placeholder="Your thoughts here..."
-          value={answer || ""}
-          onChange={e => onChange(e.target.value)}
-          rows={3}
-          className="w-full bg-white/5 border border-white/10 text-white placeholder-blue-400 rounded-xl px-4 py-3 text-sm outline-none focus:border-orange-400 resize-none transition-colors"
-        />
-      )}
-
-      {/* Multiple choice with optional comment */}
-      {question.type === "multiple_choice_comment" && (
-        <div className="flex flex-col gap-2">
-          {question.options.map(opt => (
-            <motion.button key={opt} onClick={() => onChange({ ...(answer || {}), choice: opt })} whileTap={{ scale: 0.97 }}
-              className={`text-left px-5 py-3 rounded-xl text-sm font-medium transition-all duration-150 border ${answer?.choice === opt ? "bg-orange-500 border-orange-400 text-white" : "bg-white/5 border-white/10 text-blue-100 hover:bg-white/10 hover:border-orange-400/50"}`}>
-              {opt}
-            </motion.button>
-          ))}
-          <input
-            type="text"
-            placeholder="Optional comment..."
-            value={answer?.comment || ""}
-            onChange={e => onChange({ ...(answer || {}), comment: e.target.value })}
-            className="w-full bg-white/5 border border-white/10 text-white placeholder-blue-400 rounded-xl px-4 py-3 text-sm outline-none focus:border-orange-400 transition-colors mt-1"
-          />
-        </div>
-      )}
-
-      {/* Legacy 1–10 scale */}
-      {question.type === "scale" && (
-        <div>
-          <div className="flex justify-between text-xs text-blue-300 mb-2 px-1"><span>Not important</span><span>Very important</span></div>
-          <div className="flex gap-2 flex-wrap">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-              <motion.button key={n} onClick={() => onChange(n)} whileTap={{ scale: 0.9 }}
-                className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${answer === n ? "bg-orange-500 text-white" : "bg-white/10 text-blue-200 hover:bg-white/20"}`}>
-                {n}
-              </motion.button>
-            ))}
-          </div>
-        </div>
       )}
     </div>
   );
@@ -1254,13 +1177,13 @@ function QuestionCard({ question, answer, onChange }) {
 
 // ─── Section Complete Overlay ─────────────────────────────────────────────────
 const SECTION_MESSAGES = [
-  { headline: "Great start!", sub: "Session info recorded. On to your experience! 💪", stars: 5 },
-  { headline: "Nicely done!", sub: "Your reactions are noted. Keep going! 🌟", stars: 5 },
-  { headline: "Halfway hero!", sub: "Learning section complete. You're doing great!", stars: 5 },
-  { headline: "4 of 7 done!", sub: "Behaviour section complete. More than halfway! 🚀", stars: 5 },
-  { headline: "5 of 7 done!", sub: "Results section in the bag. Almost there! 📈", stars: 5 },
-  { headline: "Nearly there!", sub: "Meaningfulness captured. One final section! ❤️", stars: 5 },
-  { headline: "All done!", sub: "Final thoughts submitted. You saved the fish! 🐟", stars: 5 },
+  { headline: "Sessions logged!",    sub: "Section 1 complete — let's hear your reaction! 💬" },
+  { headline: "Reaction captured!",  sub: "Section 2 done — now let's look at what you learned. 🧠" },
+  { headline: "Learning recorded!",  sub: "Section 3 complete — time for behaviour insights. ⚡" },
+  { headline: "Behaviour noted!",    sub: "Section 4 done — almost there, let's check results! 🏆" },
+  { headline: "Results in!",         sub: "Section 5 complete — let's explore what was meaningful. 💛" },
+  { headline: "Meaningfulness ✓",    sub: "Section 6 done — just your final thoughts left! 💬" },
+  { headline: "You did it!",         sub: "All sections complete — submitting your responses! 🎉" },
 ];
 
 function SectionCompleteOverlay({ sectionIndex, onContinue }) {
@@ -1338,7 +1261,7 @@ function SectionCompleteOverlay({ sectionIndex, onContinue }) {
           className="inline-block px-3 py-1 rounded-full text-xs font-bold text-white mb-3"
           style={{ background: sec.color }}
         >
-          Section {sec.id} of 7 — {sec.title}
+          Section {sec.id} of {SECTIONS.length} — {sec.title}
         </div>
 
         <h2 className="text-2xl font-black text-[#1e2d5a] mb-2">{msg.headline}</h2>
@@ -1402,6 +1325,11 @@ export default function App() {
   // Which section just completed (for overlay)
   const [completedSectionIdx, setCompletedSectionIdx] = useState(null);
 
+  // ── Retry queue refs — must be declared before any early return ──
+  const retryQueueRef = useRef([]);
+  const isSavingRef   = useRef(false);
+  const drainQueue    = useRef(null);
+
   if (window.location.pathname === "/result") return <Results />;
 
   const handleAgree = () => setPhase("name");
@@ -1417,32 +1345,76 @@ export default function App() {
     setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
   };
 
-  // Save one section's answers to MongoDB via /api/submit-section
-  const saveSectionToMongo = async (sectionIdx, currentAnswers) => {
+  // Attempt to POST one payload. Returns true on success, false on failure.
+  const postPayload = async (payload) => {
+    try {
+      const res = await fetch("/api/submit-section", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(payload),
+        signal:  AbortSignal.timeout(8000),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  };
+
+  // Drain the retry queue: keeps trying every 6 seconds until everything saved.
+  // Assigned here (after early return) but the ref itself is declared above.
+  if (!drainQueue.current) {
+    drainQueue.current = async () => {
+      if (isSavingRef.current) return;
+      isSavingRef.current = true;
+      while (retryQueueRef.current.length > 0) {
+        const payload = retryQueueRef.current[0];
+        const ok = await postPayload(payload);
+        if (ok) {
+          retryQueueRef.current.shift();
+          console.log(`✅ Saved section ${payload.section} for "${payload.username}"`);
+        } else {
+          console.warn(`⏳ Atlas cold-starting — retrying section ${payload.section} in 6s…`);
+          await new Promise(r => setTimeout(r, 6000));
+        }
+      }
+      isSavingRef.current = false;
+    };
+  }
+
+  // Fire-and-forget: queues the payload and starts draining. UI never waits.
+  const saveSectionToMongo = (sectionIdx, currentAnswers) => {
     const sec = SECTION_QUESTIONS[sectionIdx];
     const payload = {
       username:     userName,
       section:      sec.id,
       sectionTitle: sec.title,
-      responses:    sec.questions.map(q => ({
-        questionId:   q.id,
-        questionText: q.text,
-        answer:       currentAnswers[q.id] ?? null,
-      })),
+      responses:    sec.questions.map(q => {
+        const raw = currentAnswers[q.id] ?? null;
+        // Flatten hasOther answers into a clean string/array for storage
+        let answer = raw;
+        if (q.hasOther && raw !== null) {
+          if (Array.isArray(raw?.selected)) {
+            // checkbox+other
+            const parts = [...raw.selected];
+            if (raw.otherText?.trim()) parts.push(`Other: ${raw.otherText.trim()}`);
+            answer = parts;
+          } else if (raw?.selected !== undefined) {
+            // radio+other
+            answer = raw.otherText?.trim()
+              ? `${raw.selected} — ${raw.otherText.trim()}`
+              : raw.selected;
+          }
+        }
+        return { questionId: q.id, questionText: q.text, answer };
+      }),
       submittedAt: new Date().toISOString(),
     };
-    try {
-      await fetch(`${API_URL}/api/submit-section`, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(payload),
-      });
-    } catch (e) {
-      console.log("Backend not connected — demo mode");
-    }
+    retryQueueRef.current.push(payload);  // enqueue
+    drainQueue.current();                 // start draining (non-blocking)
   };
 
-  const handleNext = async () => {
+  // Synchronous handleNext — UI transitions instantly, save happens in background
+  const handleNext = () => {
     const newAnswered = answered + 1;
     setAnswered(newAnswered);
 
@@ -1450,11 +1422,11 @@ export default function App() {
       // Move to next question within same section
       setCurrentQInSection(q => q + 1);
     } else {
-      // Section finished — save to MongoDB
-      await saveSectionToMongo(currentSectionIdx, answers);
+      // Section finished — kick off background save immediately (no await)
+      saveSectionToMongo(currentSectionIdx, answers);
 
       if (!isLastSection) {
-        // Show section complete overlay
+        // UI moves forward right away — no waiting for network
         setCompletedSectionIdx(currentSectionIdx);
         setPhase("section-complete");
       } else {
@@ -1474,24 +1446,19 @@ export default function App() {
 
   const canProceed = () => {
     if (!currentQuestion) return false;
+    // Optional questions always allow proceeding
+    if (currentQuestion.optional) return true;
     const a = answers[currentQuestion.id];
-    if (a === undefined || a === null || a === "") return false;
-    // checkbox: must pick at least one
+    if (a === undefined || a === null) return false;
+    // hasOther questions: need at least one selection (or any otherText)
+    if (currentQuestion.hasOther) {
+      const sel = a?.selected;
+      const txt = a?.otherText ?? "";
+      if (Array.isArray(sel)) return sel.length > 0 || txt.trim().length > 0;
+      return !!sel || txt.trim().length > 0; // radio+other
+    }
+    if (a === "") return false;
     if (Array.isArray(a) && a.length === 0) return false;
-    // checkbox_other: must pick at least one option or check Other
-    if (currentQuestion.type === "checkbox_other") {
-      const hasSelected = Array.isArray(a?.selected) && a.selected.length > 0;
-      const hasOther = a?.otherChecked;
-      return hasSelected || hasOther;
-    }
-    // multiple_choice_comment: must pick a choice (comment optional)
-    if (currentQuestion.type === "multiple_choice_comment") {
-      return !!a?.choice;
-    }
-    // paragraph / text: any non-empty string
-    if (currentQuestion.type === "paragraph" || currentQuestion.type === "text") {
-      return typeof a === "string" && a.trim().length > 0;
-    }
     return true;
   };
 
@@ -1553,13 +1520,15 @@ export default function App() {
           <motion.div className="w-full rounded-2xl overflow-hidden border border-white/10"
             style={{ background:"#0f1f4a", maxWidth:500 }}
             initial={{ opacity:0, x:-30 }} animate={{ opacity:1, x:0 }}>
-             
             <div className="px-4 py-2 flex items-center gap-2 border-b border-white/10">
               <div className="w-2.5 h-2.5 rounded-full bg-orange-400"/>
               <span className="text-xs text-white font-medium">Hi, {userName}! Save The Fish 🐟</span>
               <span className="ml-auto text-xs text-orange-400">{progress}/{QUESTIONS.length} pipes laid</span>
             </div>
-             <div className="flex justify-center mb-2"><AnimatePresence mode="wait">
+            <FishGame progress={progress} total={QUESTIONS.length} isComplete={false} pondJumping={isPondJump} />
+          </motion.div>
+
+          <AnimatePresence mode="wait">
             {isPondJump ? (
               <motion.p key="jumping" initial={{ opacity:0, scale:0.8 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0 }}
                 className="text-yellow-300 text-sm font-bold text-center mt-3 max-w-xs">
@@ -1568,17 +1537,13 @@ export default function App() {
             ) : (
               <motion.p key={progress} initial={{ opacity:0, y:5 }} animate={{ opacity:1, y:0 }}
                 className="text-white font-semibold text-xs text-center mt-3 max-w-xs">
-                {progress === 0  && "🐠 The goldfish is sad and thirsty because the pond has dried up. Answer the questions to build a pipe and bring water back to the fish."}
+                {progress === 0  && "🐠 The goldfish is sad and thirsty. Answer questions to build the pipe!"}
                 {progress > 0   && progress < 10  && "🔧 Great start! The pipe is being laid toward the lake..."}
                 {progress >= 10 && progress < 20  && "💧 Almost halfway there! The fish can sense water coming..."}
                 {progress >= 20 && progress < QUESTIONS.length && "🌊 So close! Just a few more questions to save the fish!"}
               </motion.p>
             )}
-          </AnimatePresence></div>
-            <FishGame progress={progress} total={QUESTIONS.length} isComplete={false} pondJumping={isPondJump} />
-          </motion.div>
-
-          
+          </AnimatePresence>
         </div>
 
         {/* Question panel */}
@@ -1588,7 +1553,7 @@ export default function App() {
               <motion.div key="frozen" initial={{ opacity:0 }} animate={{ opacity:1 }}
                 className="flex flex-col items-center justify-center gap-5 py-10">
                 <motion.div animate={{ scale:[1,1.12,1], rotate:[0,4,-4,0] }} transition={{ repeat:Infinity, duration:0.9 }} className="text-6xl">🎉</motion.div>
-                <h2 className="text-2xl font-black text-[#1e2d5a] text-center">All 25 questions answered!</h2>
+                <h2 className="text-2xl font-black text-[#1e2d5a] text-center">All {QUESTIONS.length} questions answered!</h2>
                 <p className="text-[#1e2d5a] text-center text-sm max-w-xs">The pipe is complete — water is rushing in. Watch the fish celebrate!</p>
                 <motion.div className="flex gap-2" animate={{ opacity:[0.4,1,0.4] }} transition={{ repeat:Infinity, duration:1 }}>
                   {[0,1,2].map(i=>(<div key={i} className="w-2.5 h-2.5 rounded-full bg-orange-400"/>))}
