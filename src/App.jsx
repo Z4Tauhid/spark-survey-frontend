@@ -964,7 +964,7 @@ function AgreementPopup({ onAgree }) {
         <div className="flex justify-center">
           <SparkLogoWhite />
         </div>
-        <h2 className="text-2xl font-bold text-[#1e2d5a] text-center mb-2">Welcome to Spark Survey</h2>
+        <h2 className="text-2xl font-bold text-[#1e2d5a] text-center mb-2">Welcome to Spark Traineeships Survey.</h2>
         <p className="text-slate-500 text-center text-sm mb-6">Before you begin, please review and accept our terms.</p>
         <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-600 h-40 overflow-y-auto mb-6 border border-slate-200 leading-relaxed">
           <p className="font-semibold text-slate-700 mb-2">Data Collection Agreement</p>
