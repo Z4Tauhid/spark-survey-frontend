@@ -1322,10 +1322,49 @@ export default function App() {
   // Which section just completed (for overlay)
   const [completedSectionIdx, setCompletedSectionIdx] = useState(null);
 
-  // ── Retry queue refs — must be declared before any early return ──
-  const retryQueueRef = useRef([]);
-  const isSavingRef   = useRef(false);
-  const drainQueue    = useRef(null);
+  // ── Retry queue refs — declared before any early return ──────────────────
+  const retryQueueRef  = useRef([]);
+  const isSavingRef    = useRef(false);
+  const drainQueue     = useRef(null);
+  const apiBaseRef     = useRef(
+    process.env.REACT_APP_API_URL
+      ? process.env.REACT_APP_API_URL.replace(/\/$/, "")
+      : ""
+  );
+
+  // Initialise drainQueue once on mount — stable closure, never re-created
+  useEffect(() => {
+    const postPayload = async (payload) => {
+      try {
+        const res = await fetch(`${apiBaseRef.current}/api/submit-section`, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify(payload),
+          signal:  AbortSignal.timeout(10000),
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    };
+
+    drainQueue.current = async () => {
+      if (isSavingRef.current) return;
+      isSavingRef.current = true;
+      while (retryQueueRef.current.length > 0) {
+        const payload = retryQueueRef.current[0];
+        const ok = await postPayload(payload);
+        if (ok) {
+          retryQueueRef.current.shift();
+          console.log(`✅ Saved section ${payload.section} for "${payload.username}"`);
+        } else {
+          console.warn(`⏳ Backend not responding — retrying section ${payload.section} in 8s…`);
+          await new Promise(r => setTimeout(r, 8000));
+        }
+      }
+      isSavingRef.current = false;
+    };
+  }, []); // runs once on mount
 
   if (window.location.pathname === "/result") return <Results />;
 
@@ -1342,42 +1381,6 @@ export default function App() {
     setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
   };
 
-  // Attempt to POST one payload. Returns true on success, false on failure.
-  const postPayload = async (payload) => {
-    try {
-      const res = await fetch("/api/submit-section", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(payload),
-        signal:  AbortSignal.timeout(8000),
-      });
-      return res.ok;
-    } catch {
-      return false;
-    }
-  };
-
-  // Drain the retry queue: keeps trying every 6 seconds until everything saved.
-  // Assigned here (after early return) but the ref itself is declared above.
-  if (!drainQueue.current) {
-    drainQueue.current = async () => {
-      if (isSavingRef.current) return;
-      isSavingRef.current = true;
-      while (retryQueueRef.current.length > 0) {
-        const payload = retryQueueRef.current[0];
-        const ok = await postPayload(payload);
-        if (ok) {
-          retryQueueRef.current.shift();
-          console.log(`✅ Saved section ${payload.section} for "${payload.username}"`);
-        } else {
-          console.warn(`⏳ Atlas cold-starting — retrying section ${payload.section} in 6s…`);
-          await new Promise(r => setTimeout(r, 6000));
-        }
-      }
-      isSavingRef.current = false;
-    };
-  }
-
   // Fire-and-forget: queues the payload and starts draining. UI never waits.
   const saveSectionToMongo = (sectionIdx, currentAnswers) => {
     const sec = SECTION_QUESTIONS[sectionIdx];
@@ -1387,16 +1390,13 @@ export default function App() {
       sectionTitle: sec.title,
       responses:    sec.questions.map(q => {
         const raw = currentAnswers[q.id] ?? null;
-        // Flatten hasOther answers into a clean string/array for storage
         let answer = raw;
         if (q.hasOther && raw !== null) {
           if (Array.isArray(raw?.selected)) {
-            // checkbox+other
             const parts = [...raw.selected];
             if (raw.otherText?.trim()) parts.push(`Other: ${raw.otherText.trim()}`);
             answer = parts;
           } else if (raw?.selected !== undefined) {
-            // radio+other
             answer = raw.otherText?.trim()
               ? `${raw.selected} — ${raw.otherText.trim()}`
               : raw.selected;
@@ -1406,8 +1406,12 @@ export default function App() {
       }),
       submittedAt: new Date().toISOString(),
     };
-    retryQueueRef.current.push(payload);  // enqueue
-    drainQueue.current();                 // start draining (non-blocking)
+    retryQueueRef.current.push(payload);
+    // drainQueue.current is set by the useEffect on mount
+    // Use setTimeout(0) so it always runs after mount even in edge cases
+    setTimeout(() => {
+      if (drainQueue.current) drainQueue.current();
+    }, 0);
   };
 
   // Synchronous handleNext — UI transitions instantly, save happens in background
